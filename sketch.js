@@ -1,5 +1,6 @@
 var mario, bg, tower, towerGroup;
-var ob, obGroup, obImg, iOb, IobGrp;
+var ob, ob1, ob2, obGroup, obImg, iOb, IobGrp;
+var bb, bbImg, bbGrp;
 var iTower, iTowerGrp;
 var cloud, cloudImg, cGroup;
 var bush, bushImg, bGroup;
@@ -14,6 +15,7 @@ var fc;
 
 function preload(){
   bgImg = loadImage("/Images/bg1.jpg");
+  bbImg = loadImage("/Images/ob.png");
   m_running = loadAnimation("/Images/m1.png","/Images/m2.png","/Images/m3.png","/Images/m4.png","/Images/m5.png");
   m_crash = loadImage("/Images/m1.png");
   obImg = loadAnimation("Images/BlueOb.png", "Images/blueob1.png");
@@ -34,11 +36,16 @@ function setup(){
  mario.addAnimation("run", m_running); 
 
  iGround = createSprite(mario.x, mario.y+90,height,5);
- iGround.velocityX = 5;
  iGround.visible = false;
  
+ mario.setCollider("rectangle",0,0,mario.width, mario.height);
+ mario.debug = true;
+
+ hitScore = 2;
+ 
  obGroup = new Group();
- towerGroup = new Group();  
+ towerGroup = new Group(); 
+ bbGrp = new Group(); 
  bGroup = new Group();
  iTowerGrp = new Group();
  iObGrp = new Group();
@@ -53,19 +60,22 @@ function draw(){
   camera.position.x = mario.x+500;
   camera.position.y = mario.y-150;
 
+
   if(gameState === PLAY){
-  mario.velocityX = 5;
+  mario.velocityX = (5+score/120);
+  iGround.velocityX = mario.velocityX;
+  score = score+Math.round(getFrameRate()/60);
   if (mario.x+300 > bg.x){
     bg.x = mario.x + bg.width/2-150;
   }
   mario.velocityY = 0;
   if(keyDown("SPACE")){
-    mario.velocityY = -17;
+    mario.velocityY = -20;
   }
-  mario.velocityY = mario.velocityY+4;
+  mario.velocityY = mario.velocityY+5;
   mario.collide(iGround);
 
-  randomNum = Math.round(random(1,2));
+  randomNum = Math.round(random(1,3));
   if(randomNum === 1){
     spawnObstacles();
   }
@@ -74,36 +84,29 @@ function draw(){
     spawnTowers();
   }
 
+  if(randomNum === 3){
+    spawnbb();
+  }
+
   spawnBushes();
   mario.collide(towerGroup);
   mario.collide(iObGrp);
   }
 
-  if(mario.isTouching(towerGroup)){
-    score+=10;
-  }
+  /*if(iTowerGrp.isTouching(mario) || obGroup.isTouching(mario)){
+    hitScore = hitScore-1;
+  }*/
 
-
-  if(obGroup.isTouching(mario)) {
+  if (obGroup.isTouching(mario) || iTowerGrp.isTouching(mario) || bbGrp.isTouching(mario)) {
     fc = frameCount;
   }
   if (fc + 5 === frameCount) {
-    score = score + 5;
+    hitScore = hitScore-1;
   }
 
-  if(iTowerGrp.isTouching(mario) || obGroup.isTouching(mario)){
-    //hitScore = hitScore-1;
+  if(hitScore === 0){
     gameState = END;
-    score-=20;
   }
-
-
-
-  //text("Life"+hitScore, 500,500);
-
- /* if(hitScore === 0){
-    gameState = END;
-  }*/
 
   if(gameState === END){
     mario.setVelocity(0,0);
@@ -112,12 +115,16 @@ function draw(){
     iObGrp.velocityX = 0;
     towerGroup.velocityX = 0;
     bGroup.velocityX = 0;
+    if(keyDown("R")){
+      gameState = PLAY;
+    }
   }
 
   drawSprites();
   textSize(20);
   fill("black");
-  text("Score:"+score,mario.x+100,mario.y-200);
+  text("Score: "+score,mario.x+100,mario.y-200);
+  text("Life: "+hitScore, mario.x-50, mario.y - 200);
 }
 
 function spawnBushes(){
@@ -136,11 +143,21 @@ function spawnObstacles(){
   if(frameCount%120 === 0){
     ob = createSprite(mario.x+width,height-100,20,20);
     ob.addAnimation("xyz",obImg);
-    ob.scale = 3;33
-    iOb = createSprite(mario.x+width, height-140,30,10);
+    ob.scale = 3;
+    ob1 = createSprite(mario.x+width, height-150,20,20);
+    ob1.addAnimation("xyz", obImg);
+    ob1.scale = 3;
+    ob2 = createSprite(mario.x+width, height-200,20,20);
+    ob2.addAnimation("xyz", obImg);
+    ob2.scale = 3;
+    iOb = createSprite(mario.x+width, height-250,30,10);
     ob.lifetime = width/ob.velocityX;
     iOb.lifetime = width/ob.velocityX;
+    ob1.lifetime = width/ob.velocityX;
+    ob2.lifetime = width/ob.velocityX;
     iObGrp.add(iOb);
+    obGroup.add(ob1);
+    obGroup.add(ob2);
     obGroup.add(ob);
   }
   
@@ -157,5 +174,15 @@ function spawnTowers(){
     iTower.lifetime = width/iTower.velocityX;
     towerGroup.add(tower);
     iTowerGrp.add(iTower);
+  }
+}
+
+function spawnbb(){
+  if(frameCount%190 === 0){
+    bb = createSprite(mario.x+width, height-160,20,20);
+    bb.addImage(bbImg);
+    bb.scale = 0.2;
+    bb.lifetime = width/bb.velocityX;
+    bbGrp.add(bb);
   }
 }
