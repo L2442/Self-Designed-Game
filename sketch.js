@@ -13,6 +13,9 @@ var gameState = PLAY;
 var hitScore = 2;
 var fc;
 var life, life2, lifeImg;
+var bgMusic, lifeLost, marioJump, dieSnd;
+var gameOver, gameOverImg;
+var reset, resetImg;
 
 function preload(){
   bgImg = loadImage("/Images/bg1.jpg");
@@ -25,6 +28,11 @@ function preload(){
   cloudImg = loadImage("/Images/cloud.png");
   bushImg = loadImage("/Images/bush.png");
   lifeImg = loadImage("/Images/life.png");
+  bgMusic = loadSound("/Music/bgMusic.mp3");
+  marioJump = loadSound("/Music/marioJump.mp3");
+  dieSnd = loadSound("/Music/die.mp3");
+  gameOverImg = loadImage("/Images/gameOver.png");
+  resetImg = loadImage("/Images/reset.png");
 }
 
 function setup(){
@@ -33,6 +41,8 @@ function setup(){
  bg.addImage("bi",bgImg);
  bg.scale =1.2;
  bg.x = bg.width /2;
+
+ bgMusic.play();
 
  mario = createSprite(200,493,20,20);
  mario.addAnimation("run", m_running); 
@@ -48,12 +58,20 @@ function setup(){
  life2.addImage(lifeImg);
  life2.scale = 0.05;
  
+ gameOver= createSprite(width/2, height/2-150, 20,20);
+ gameOver.addImage(gameOverImg);
+ gameOver.scale = 0.3;
+
+ reset = createSprite(width/2,height/2-80,20,20);
+ reset.addImage(resetImg);
+ reset.scale = 0.15;
+
  mario.setCollider("rectangle",0,0,mario.width, mario.height);
  mario.debug = true;
 
  hitScore = 2;
  
- obGroup = new Group();
+ obGroup = new Group();     
  towerGroup = new Group(); 
  bbGrp = new Group(); 
  bGroup = new Group();
@@ -68,11 +86,14 @@ function draw(){
   background(rgb(94, 145, 254));
 
   camera.position.x = mario.x+500;
-  //camera.position.y = mario.y-150;
   life.x = mario.x-50;
   life2.x = mario.x-25;
+  gameOver.x = mario.x+450; 
+  reset.x = mario.x+450;
 
   if(gameState === PLAY){
+    gameOver.visible = false;
+    reset.visible = false;
   mario.velocityX = (5+score/120);
   iGround.velocityX = mario.velocityX;
   score = score+Math.round(getFrameRate()/60);
@@ -82,6 +103,7 @@ function draw(){
   mario.velocityY = 0;
   if(keyDown("SPACE") && mario.y>height/2-50){
     mario.velocityY = -20;
+    marioJump.play();
   }
   mario.velocityY = mario.velocityY+5;
   mario.collide(iGround);
@@ -123,6 +145,7 @@ function draw(){
 
   if (obGroup.isTouching(mario) || iTowerGrp.isTouching(mario) || bbGrp.isTouching(mario)) {
     fc = frameCount;
+    dieSnd.play();
   }
   if (fc + 5 === frameCount) {
     hitScore = hitScore-1;
@@ -138,21 +161,25 @@ function draw(){
   }
 
   if(gameState === END){
+    gameOver.visible = true;
+    reset.visible = true;
     mario.setVelocity(0,0);
     obGroup.velocityX = 0;
     iTowerGrp.velocityX = 0;
     iObGrp.velocityX = 0;
     towerGroup.velocityX = 0;
     bGroup.velocityX = 0;
-    if(keyDown("R")){
+    score = 0;
+    if(keyDown("SPACE")){
       gameState = PLAY;
     }
   }
 
+
   drawSprites();
   textSize(20);
   fill("black");
-  text("Score: "+score,camera.position.x+100,150);
+  text("Score: "+score,life.x+1000,life.y+20);
   text("Life: ", life.x-50,life.y+10);
 }
 
