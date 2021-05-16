@@ -20,8 +20,9 @@ var reset, resetImg;
 function preload(){
   bgImg = loadImage("/Images/bg1.jpg");
   bbImg = loadImage("/Images/ob.png");
-  m_running = loadAnimation("/Images/m1.png","/Images/m2.png","/Images/m3.png","/Images/m4.png","/Images/m5.png");
-  m_crash = loadImage("/Images/m1.png");
+  m_running = loadAnimation("/Images/m1.png","/Images/m2.png"/*,"/Images/m3.png"*/);
+  m_crash = loadAnimation("/Images/m1.png");
+  m_slide = loadAnimation("/Images/m4.png");
   obImg = loadAnimation("Images/BlueOb.png", "Images/blueob1.png");
   flatOb = loadImage("/Images/flatob.png");
   towerImg = loadImage("/Images/tower.PNG");
@@ -44,8 +45,11 @@ function setup(){
 
  bgMusic.play();
 
- mario = createSprite(200,493,20,20);
+ mario = createSprite(200,496,20,20);
+ mario.scale = 1.25;
  mario.addAnimation("run", m_running); 
+ mario.addAnimation("xyz", m_crash);
+ mario.addAnimation("abc", m_slide);
 
  iGround = createSprite(mario.x, mario.y+90,height,5);
  iGround.visible = false;
@@ -66,7 +70,7 @@ function setup(){
  reset.addImage(resetImg);
  reset.scale = 0.15;
 
- mario.setCollider("rectangle",0,0,mario.width, mario.height);
+ mario.setCollider("rectangle",0,0,mario.width, mario.height+32);
  mario.debug = true;
 
  hitScore = 2;
@@ -90,21 +94,31 @@ function draw(){
   life2.x = mario.x-25;
   gameOver.x = mario.x+450; 
   reset.x = mario.x+450;
+  mario.changeAnimation("run", m_running);
 
   if(gameState === PLAY){
     gameOver.visible = false;
     reset.visible = false;
-  mario.velocityX = (5+score/120);
-  iGround.velocityX = mario.velocityX;
-  score = score+Math.round(getFrameRate()/60);
+    mario.velocityX = (5+score/120);
+    iGround.x = mario.x;
+    score = score+Math.round(getFrameRate()/60);
   if (mario.x+300 > bg.x){
     bg.x = mario.x + bg.width/2-150;
   }
   mario.velocityY = 0;
-  if(keyDown("SPACE") && mario.y>height/2-50){
+  if(keyDown("UP_ARROW") && mario.y>height/2-20){
     mario.velocityY = -20;
     marioJump.play();
   }
+  mario.setCollider("rectangle",0,0,mario.width-25, mario.height-40);
+  mario.scale = 1.25;
+  if(keyDown("DOWN_ARROW")){
+    mario.changeAnimation("abc", m_slide);
+    mario.scale = 1.6;
+    mario.setCollider("rectangle",0,0,mario.width-35, mario.height-100);
+  }
+
+
   mario.velocityY = mario.velocityY+5;
   mario.collide(iGround);
 
@@ -164,14 +178,15 @@ function draw(){
     gameOver.visible = true;
     reset.visible = true;
     mario.setVelocity(0,0);
+    mario.changeAnimation("xyz", m_crash);
+    iGround.velocityX = 0;   
     obGroup.velocityX = 0;
     iTowerGrp.velocityX = 0;
     iObGrp.velocityX = 0;
     towerGroup.velocityX = 0;
     bGroup.velocityX = 0;
-    score = 0;
-    if(keyDown("SPACE")){
-      gameState = PLAY;
+    if(mousePressedOver(reset)){
+      gameReset();
     }
   }
 
@@ -204,6 +219,7 @@ function spawnObstacles(){
     ob2.addAnimation("xyz", obImg);
     ob2.scale = 3;
     iOb = createSprite(mario.x+width, height-250,30,10);
+    iOb.visible = false;
     ob.lifetime = width/ob.velocityX;
     iOb.lifetime = width/ob.velocityX;
     ob1.lifetime = width/ob.velocityX;
@@ -219,6 +235,7 @@ function spawnTowers(){
     tower.addImage(towerImg);
     tower.depth = tower.depth;
     iTower = createSprite(tower.x-34, tower.y+10, 10, 100);
+    iTower.visible = false;
     tower.scale = 1.5;
     tower.lifetime = width/tower.velocityX;
     iTower.lifetime = width/iTower.velocityX;
@@ -227,9 +244,32 @@ function spawnTowers(){
 }
 
 function spawnbb(){
-    bb = createSprite(mario.x+width, height-160,20,20);
+    var y = Math.round(random(1,2));
+    switch(y){
+      case 1: y = height-160;
+      break;
+      case 2: y = height-260; 
+      break;
+      default: break;
+    }
+    bb = createSprite(mario.x+width, y,20,20);
     bb.addImage(bbImg);
     bb.scale = 0.15;
     bb.lifetime = width/bb.velocityX;
     bbGrp.add(bb);
 }
+
+function gameReset(){
+    gameState = PLAY;
+    hitScore = 2;
+    mario.changeAnimation("run", m_running);
+    score = 0;
+    life.visible = true;
+    life2.visible = true;
+    towerGroup.destroyEach();
+    iTowerGrp.destroyEach();
+    bbGrp.destroyEach();
+    obGroup.destroyEach();
+    iObGrp.destroyEach();
+    bGroup.destroyEach();
+  }
