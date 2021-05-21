@@ -196,6 +196,8 @@ function draw(){
   fill("black");
   text("Score: "+score,life.x+1000,life.y+20);
   text("Life: ", life.x-50,life.y+10);
+  text("Press UP ARROW to jump  |", life.x-50,life.y-20);
+  text("    Press DOWN ARROW to duck", life.x+200,life.y-20);
 }
 
 function spawnBushes(){
